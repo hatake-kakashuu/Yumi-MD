@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: yumi-md
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: BOT_NAME
+        value: Yumi
+      - key: OWNER_NAME
+        value: Kakashi
+      - key: PREFIX
+        value: .
+      - key: MODE
+        value: public
+      - key: MONGODB_URI
+        sync: false
+      - key: OWNER_NUMBER
+        sync: false
+      - key: MODS
+        sync: false
+      - key: SESSION_FOLDER
+        value: session
