@@ -13,26 +13,35 @@ let default_1 = class extends BaseCommand {
                 return void (await M.reply('Provide a query!'));
             const query = context.trim();
             await M.reply('*🤹 Searching...*');
-            const videos = await this.client.utils.fetch(`https://weeb-api.vercel.app/ytsearch?query=${encodeURIComponent(query)}`);
-            if (!videos || !videos.length)
-                return void (await M.reply(`No videos found for *"${query}"*`));
-            const length = Math.min(videos.length, 10);
-            let text = '';
-            for (let i = 0; i < length; i++)
-                text +=
-                    `*#${i + 1}*\n` +
-                        `🎵 *Title:* ${videos[i].title}\n` +
-                        `🎬 *Channel:* ${videos[i].author.name}\n` +
-                        `⏱ *Duration:* ${videos[i].seconds}s\n` +
-                        `🔗 *URL:* ${videos[i].url}\n\n`;
-            const thumb = await this.client.utils.getBuffer(videos[0].thumbnail).catch(() => undefined);
-            await M.reply(text, 'text', undefined, undefined, undefined, undefined, {
-                title: videos[0].title,
-                thumbnail: thumb,
-                mediaType: 2,
-                body: videos[0].description,
-                mediaUrl: videos[0].url
-            });
+            try {
+                const { default: yts } = await import('yt-search');
+                const searchRes = await yts(query);
+                const videos = searchRes?.videos || [];
+                if (!videos || !videos.length)
+                    return void (await M.reply(`No videos found for *"${query}"*`));
+                const length = Math.min(videos.length, 10);
+                let text = '';
+                for (let i = 0; i < length; i++)
+                    text +=
+                        `*#${i + 1}*\n` +
+                            `🎵 *Title:* ${videos[i].title}\n` +
+                            `🎬 *Channel:* ${videos[i].author?.name || 'Unknown'}\n` +
+                            `⏱ *Duration:* ${videos[i].timestamp || videos[i].seconds + 's'}\n` +
+                            `🔗 *URL:* ${videos[i].url}\n\n`;
+                const thumb = videos[0]?.thumbnail
+                    ? await this.client.utils.getBuffer(videos[0].thumbnail).catch(() => undefined)
+                    : undefined;
+                await M.reply(text, 'text', undefined, undefined, undefined, undefined, {
+                    title: videos[0].title,
+                    thumbnail: thumb,
+                    mediaType: 2,
+                    body: videos[0].description,
+                    mediaUrl: videos[0].url
+                });
+            } catch (err) {
+                console.error('YTSEARCH ERROR:', err);
+                await M.reply(`Failed to search YouTube: ${err?.message || err}`);
+            }
         };
     }
 };

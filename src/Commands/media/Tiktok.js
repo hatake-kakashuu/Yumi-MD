@@ -7,6 +7,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import { default as axios } from 'axios';
 import { load } from 'cheerio';
 import { BaseCommand, Command } from '../../Structures/index.js';
+import config from '../../config.js';
+
 let default_1 = class extends BaseCommand {
     constructor() {
         super(...arguments);
@@ -18,19 +20,45 @@ let default_1 = class extends BaseCommand {
             if (!url)
                 return void (await M.reply('Provide a TikTok URL'));
             try {
-                const data = await this.onlineTTD(url);
-                if (!data || data.error || !data.videoUrl)
+                await M.reply('⏳ Fetching TikTok video...');
+                let videoUrl = null;
+                let title = 'TikTok Video';
+
+                // 1. Try Astronic API first
+                try {
+                    const astronicUrl = `${config.astronicApiUrl || 'https://astronic-api.vercel.app'}/api/v1/tiktok?url=${encodeURIComponent(url)}`;
+                    const resp = await axios.get(astronicUrl, {
+                        headers: { 'X-API-Key': config.astronicApiKey || 'ak_astronic_2d4c5977bf9a69fe898e5baf437aa7ddb846a184' },
+                        timeout: 25000
+                    });
+                    if (resp.data?.status === 'success') {
+                        title = resp.data.title || title;
+                        videoUrl = resp.data.video_hd_url || resp.data.video_url || resp.data.media?.find(m => m.type === 'video')?.url;
+                    }
+                } catch (e) {
+                    // fallback
+                }
+
+                // 2. Fallback to scraping
+                if (!videoUrl) {
+                    const data = await this.onlineTTD(url);
+                    if (data && !data.error && data.videoUrl) {
+                        videoUrl = data.videoUrl;
+                        title = data.title || title;
+                    }
+                }
+
+                if (!videoUrl)
                     return void (await M.reply('Failed to download TikTok video'));
-                const caption = ` *Title:* ${data.title || 'Unknown'}\n` +
-                    ` *Description:* ${data.description || 'No description'}\n` +
-                    ` *Source:* ${data.siteUrl || url}`;
+
+                const caption = `🎬 *Title:* ${title}\n🔗 *Source:* ${url}`;
                 const video = await axios
-                    .get(data.videoUrl, { responseType: 'arraybuffer', headers: this.headers })
+                    .get(videoUrl, { responseType: 'arraybuffer', headers: this.headers, timeout: 60000 })
                     .then(res => Buffer.from(res.data));
                 await M.reply(video, 'video', false, undefined, caption);
             }
             catch (err) {
-                console.log('TIKTOK CMD ERROR →', err?.message);
+                console.error('TIKTOK CMD ERROR →', err?.message);
                 await M.reply('Failed to fetch TikTok 😢');
             }
         };

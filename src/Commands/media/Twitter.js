@@ -5,6 +5,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import { BaseCommand, Command } from '../../Structures/index.js';
+import axios from 'axios';
+import config from '../../config.js';
+
 let default_1 = class extends BaseCommand {
     constructor() {
         super(...arguments);
@@ -13,24 +16,72 @@ let default_1 = class extends BaseCommand {
             const url = M.urls.find(u => pattern.test(u));
             if (!url)
                 return void (await M.reply('Provide a valid Twitter/X post URL'));
+
             try {
-                const result = await this.client.utils.fetch(`https://weeb-api.vercel.app/twitter?url=${encodeURIComponent(url)}`);
-                if (result.error)
-                    return void (await M.reply("Can't access post or invalid URL"));
-                if (!result.urls?.length)
-                    return void (await M.reply('No downloadable media found'));
-                for (const media of result.urls) {
-                    try {
-                        const buffer = await this.client.utils.getBuffer(media.url);
-                        await M.reply(buffer, media.type, media.quality === 'gif', undefined, result.caption);
+                await M.reply('⏳ Fetching Twitter/X media...');
+                let mediaList = [];
+                let caption = '';
+
+                // 1. Try Astronic API
+                try {
+                    const astronicUrl = `${config.astronicApiUrl || 'https://astronic-api.vercel.app'}/api/v1/twitter?url=${encodeURIComponent(url)}`;
+                    const resp = await axios.get(astronicUrl, {
+                        headers: { 'X-API-Key': config.astronicApiKey || 'ak_astronic_2d4c5977bf9a69fe898e5baf437aa7ddb846a184' },
+                        timeout: 25000
+                    });
+                    if (resp.data?.status === 'success') {
+                        caption = resp.data.title || resp.data.description || 'Twitter/X Post';
+                        const items = resp.data.media || [];
+                        if (resp.data.video_hd_url || resp.data.video_url) {
+                            mediaList.push({
+                                url: resp.data.video_hd_url || resp.data.video_url,
+                                type: 'video'
+                            });
+                        } else {
+                            for (const item of items) {
+                                if (item.url || item.download_url) {
+                                    mediaList.push({
+                                        url: item.download_url || item.url,
+                                        type: item.type === 'image' ? 'image' : 'video'
+                                    });
+                                }
+                            }
+                        }
                     }
-                    catch (err) {
-                        console.log('TWITTER MEDIA ERROR →', err);
+                } catch (e) {
+                    // fallback
+                }
+
+                // 2. Fallback to weeb-api
+                if (!mediaList.length) {
+                    const fallback = await this.client.utils.fetch(`https://weeb-api.vercel.app/twitter?url=${encodeURIComponent(url)}`).catch(() => null);
+                    if (fallback && !fallback.error && Array.isArray(fallback.urls)) {
+                        caption = fallback.caption || caption;
+                        for (const item of fallback.urls) {
+                            if (item.url) {
+                                mediaList.push({
+                                    url: item.url,
+                                    type: item.type === 'image' ? 'image' : 'video',
+                                    isGif: item.quality === 'gif'
+                                });
+                            }
+                        }
                     }
                 }
-            }
-            catch (err) {
-                console.log('TWITTER CMD ERROR →', err?.message);
+
+                if (!mediaList.length)
+                    return void (await M.reply('No downloadable media found in this tweet.'));
+
+                for (const media of mediaList) {
+                    try {
+                        const buffer = await this.client.utils.getBuffer(media.url);
+                        await M.reply(buffer, media.type, Boolean(media.isGif), undefined, caption);
+                    } catch (err) {
+                        console.error('TWITTER MEDIA SEND ERROR:', err);
+                    }
+                }
+            } catch (err) {
+                console.error('TWITTER CMD ERROR:', err);
                 await M.reply('Failed to fetch Twitter/X post 😢');
             }
         };
