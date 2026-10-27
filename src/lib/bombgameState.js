@@ -1,0 +1,1 @@
+export const bombGameState={};export default bombGameState;

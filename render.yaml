@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: yumi-md
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: BOT_NAME
+        sync: false
+      - key: PREFIX
+        sync: false
+      - key: MODE
+        sync: false
+      - key: OWNER_NAME
+        sync: false
+      - key: OWNER_NUMBER
+        sync: false
+      - key: MODS
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: MONGODB_URI
+        value: mongodb+srv://lakshgupta50000_db_user:MlPyBH8vdbnvqveQ@cluster0.xgua6id.mongodb.net/?retryWrites=true&w=majority
+      - key: SESSION_FOLDER
+        value: session
+      - key: INTERAPI_KEY
+        value: ia_live_5b09f6226b185d477d82c2e03ac098edc1258ee65cbf8d95

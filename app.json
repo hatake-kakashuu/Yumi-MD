@@ -1,0 +1,81 @@
+{
+  "name": "Yumi-MD",
+  "description": "An ultra-fast, feature-rich WhatsApp Multi-Device bot built with Node.js and Baileys.",
+  "keywords": [
+    "bot",
+    "whatsapp",
+    "whatsapp-bot",
+    "baileys",
+    "yumi-md",
+    "anime-bot",
+    "multidevice",
+    "automation"
+  ],
+  "logo": "https://raw.githubusercontent.com/hatake-kakashuu/Yumi-MD/main/public/menu.jpg",
+  "website": "https://github.com/hatake-kakashuu/Yumi-MD#readme",
+  "repository": "https://github.com/hatake-kakashuu/Yumi-MD.git",
+  "success_url": "/",
+  "env": {
+    "BOT_NAME": {
+      "description": "Name of your bot",
+      "value": "Yumi",
+      "required": false
+    },
+    "PREFIX": {
+      "description": "Command prefix for your bot",
+      "value": ".",
+      "required": false
+    },
+    "MODE": {
+      "description": "Bot operational mode ('public' or 'self')",
+      "value": "public",
+      "required": false
+    },
+    "OWNER_NAME": {
+      "description": "Your name (will be displayed on the vCard and owner command)",
+      "value": "Kakashi",
+      "required": false
+    },
+    "OWNER_NUMBER": {
+      "description": "Primary owner WhatsApp phone number in international format without + (e.g. 919876543210)",
+      "value": "919389379221",
+      "required": false
+    },
+    "MODS": {
+      "description": "Phone numbers of users who you want to be bot moderators/admins separated by comma (e.g. 919876543210,919123456780)",
+      "value": "",
+      "required": false
+    },
+    "MONGODB_URI": {
+      "description": "A valid MongoDB connection URI string for database persistence",
+      "value": "mongodb+srv://lakshgupta50000_db_user:MlPyBH8vdbnvqveQ@cluster0.xgua6id.mongodb.net/?retryWrites=true&w=majority",
+      "required": false
+    },
+    "SESSION_FOLDER": {
+      "description": "Name of the directory to store session credentials",
+      "value": "session",
+      "required": false
+    },
+    "GOOGLE_API_KEY": {
+      "description": "Google API key for custom search (optional)",
+      "value": "",
+      "required": false
+    },
+    "INTERAPI_KEY": {
+      "description": "API key for InterAPI social media downloader (Facebook, etc.)",
+      "value": "ia_live_5b09f6226b185d477d82c2e03ac098edc1258ee65cbf8d95",
+      "required": false
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    },
+    {
+      "url": "https://github.com/clhuang/heroku-buildpack-webp-binaries.git"
+    },
+    {
+      "url": "https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git"
+    }
+  ]
+}
